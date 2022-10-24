@@ -275,12 +275,7 @@ export const NewEntityModal = ({ open, handleClose }) => {
                               <Switch
                                 name={`columns.${index}.isPrimaryKey`}
                                 checked={column.isPrimaryKey}
-                                disabled={column.isForeignKey}
                                 onChange={(e) => {
-                                  formik.setFieldValue(
-                                    `columns.${index}.isForeignKey`,
-                                    !e.target.value
-                                  );
                                   const futureValue = e.target.value != "true";
                                   if (futureValue) {
                                     formik.setFieldValue(
@@ -303,12 +298,7 @@ export const NewEntityModal = ({ open, handleClose }) => {
                               <Switch
                                 name={`columns.${index}.isForeignKey`}
                                 checked={column.isForeignKey}
-                                disabled={column.isPrimaryKey}
                                 onChange={(e) => {
-                                  formik.setFieldValue(
-                                    `columns.${index}.isPrimaryKey`,
-                                    !e.target.value
-                                  );
                                   formik.setFieldValue(
                                     `columns.${index}.relationshipEntity`,
                                     ""
