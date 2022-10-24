@@ -1,10 +1,10 @@
-import AddIcon from "@mui/icons-material/Add";
-import SearchIcon from "@mui/icons-material/Search";
-import { Button, Tab, Tabs, Typography } from "@mui/material";
+import { Tab, Tabs, Typography } from "@mui/material";
 import { Box } from "@mui/system";
 import { useState } from "react";
 import { useEntities } from "../../hooks/useEntities";
 import { AddNewRecordsModal } from "../AddNewRecordsModal";
+import { DropMenu } from "../DropMenu";
+import { NewEntityModal } from "../NewEntityModal";
 import { ViewEntityRecordsModal } from "../ViewEntityRecordsModal";
 
 const TabPanel = (props) => {
@@ -24,12 +24,15 @@ const TabPanel = (props) => {
 };
 
 export const EntityColumnsView = () => {
-  const { entities } = useEntities();
+  const { entities, deleteEntity } = useEntities();
+
   const [value, setValue] = useState(
     entities.some((entity) => !entity.example) ? 0 : 1
   );
   const [openAddNewRecordsModal, setOpenAddNewRecordsModal] = useState(false);
   const [openViewEntityRecordsModal, setOpenViewEntityRecordsModal] =
+    useState(false);
+  const [openNewEntityModal, setOpenNewEntityModal] =
     useState(false);
   const [entityChoosed, setEntityChoosed] = useState(null);
 
@@ -44,7 +47,7 @@ export const EntityColumnsView = () => {
     };
   };
 
-  const renderColumns = (entities) =>
+  const renderColumns = (entities, canEdit) =>
     entities.map((entity) => {
       if (!entity.variable) {
         return (
@@ -60,26 +63,30 @@ export const EntityColumnsView = () => {
                 {entity.name}
               </Typography>
 
-              <Box>
-                <Button
-                  size="small"
-                  onClick={() => {
-                    setEntityChoosed(entity);
-                    setOpenViewEntityRecordsModal(true);
-                  }}
-                >
-                  <SearchIcon fontSize="small" />
-                </Button>
-                <Button
-                  size="small"
-                  onClick={() => {
+              {canEdit ? (
+                <DropMenu
+                  handleAddRecords={() => {
                     setEntityChoosed(entity);
                     setOpenAddNewRecordsModal(true);
                   }}
-                >
-                  <AddIcon fontSize="small" />
-                </Button>
-              </Box>
+                  handleEditEntity={() => {
+                    setEntityChoosed(entity);
+                    setOpenNewEntityModal(true);
+                  }}
+                  handleViewRecords={() => {
+                    setEntityChoosed(entity);
+                    setOpenViewEntityRecordsModal(true);
+                  }}
+                  handleDeleteEntity={() => deleteEntity(entity)}
+                />
+              ) : (
+                <DropMenu
+                  handleViewRecords={() => {
+                    setEntityChoosed(entity);
+                    setOpenViewEntityRecordsModal(true);
+                  }}
+                />
+              )}
             </Box>
             {Object.keys(entity.columns).map((column, index) => (
               <Typography sx={{ padding: "0 16px" }} key={`${column}-${index}`}>
@@ -125,10 +132,10 @@ export const EntityColumnsView = () => {
           </Box>
           <Box sx={{ overflow: "auto" }}>
             <TabPanel value={value} index={0}>
-              {renderColumns(entities.filter((entity) => !entity.example))}
+              {renderColumns(entities.filter((entity) => !entity.example), true)}
             </TabPanel>
             <TabPanel value={value} index={1}>
-              {renderColumns(entities.filter((entity) => entity.example))}
+              {renderColumns(entities.filter((entity) => entity.example), false)}
             </TabPanel>
           </Box>
         </>
@@ -152,6 +159,17 @@ export const EntityColumnsView = () => {
           handleClose={() => {
             setEntityChoosed(null);
             setOpenViewEntityRecordsModal(false);
+          }}
+        />
+      )}
+
+      {openNewEntityModal && (
+        <NewEntityModal
+          open={openNewEntityModal}
+          entity={entityChoosed}
+          handleClose={() => {
+            setEntityChoosed(null);
+            setOpenNewEntityModal(false);
           }}
         />
       )}

@@ -48,7 +48,7 @@ const getYupTemplateByColumnConstraints = (type, isRequired = false) => {
 };
 
 export const AddNewRecordsModal = ({ open, entity = {}, handleClose }) => {
-  const { entities = [], addEntity } = useEntities();
+  const { entities = [], updateEntity } = useEntities();
   const [alert, setAlert] = useState({ shouldShow: false, message: "" });
 
   const getValidationSchemaByEntityColumns = () => {
@@ -127,9 +127,10 @@ export const AddNewRecordsModal = ({ open, entity = {}, handleClose }) => {
       return;
     }
 
-    entity.records = [...entity.records, ...values.records];
+    const entityUpdated = {...entity};
+    entityUpdated.records = [...entity.records, ...values.records];
 
-    addEntity(entity);
+    updateEntity(entityUpdated, entity);
     closeModal();
   };
 

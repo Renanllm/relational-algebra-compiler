@@ -1,6 +1,7 @@
 import DeleteIcon from "@mui/icons-material/Delete";
 import {
-  Alert, Button,
+  Alert,
+  Button,
   Divider,
   FormControl,
   FormControlLabel,
@@ -13,7 +14,7 @@ import {
   Snackbar,
   Switch,
   TextField,
-  Typography
+  Typography,
 } from "@mui/material";
 import { Box } from "@mui/system";
 import { FieldArray, FormikProvider, getIn, useFormik } from "formik";
@@ -50,38 +51,30 @@ const validationSchema = yup.object({
         .min(2, "Mínimo de 2 caracteres")
         .max(150, "Máximo de 150 caracteres")
         .required("Esse campo é obrigatório"),
-      columnType: yup
-        .string()
-        .required('Esse campo é obrigatório'),
-      isRequiredColumn: yup
-        .boolean()
-        .required('Esse campo é obrigatório'),
-      isPrimaryKey: yup
-        .boolean()
-        .required('Esse campo é obrigatório'),
-      isForeignKey: yup
-        .boolean()
-        .required('Esse campo é obrigatório'),
-      relationshipEntity: yup
-        .string()
-        .when('isForeignKey', {
-          is: true,
-          then: yup.string().required('Esse campo é obrigatório'),
-          otherwise: yup.string(),
-        })
+      columnType: yup.string().required("Esse campo é obrigatório"),
+      isRequiredColumn: yup.boolean().required("Esse campo é obrigatório"),
+      isPrimaryKey: yup.boolean().required("Esse campo é obrigatório"),
+      isForeignKey: yup.boolean().required("Esse campo é obrigatório"),
+      relationshipEntity: yup.string().when("isForeignKey", {
+        is: true,
+        then: yup.string().required("Esse campo é obrigatório"),
+        otherwise: yup.string(),
+      }),
     })
   ),
 });
 
-export const NewEntityModal = ({ open, handleClose }) => {
-  const { entities = [], addEntity } = useEntities();
+export const NewEntityModal = ({ open, handleClose, entity }) => {
+  const { entities = [], addEntity, updateEntity } = useEntities();
   const [showAlert, setShowAlert] = useState(false);
 
   const handleSubmit = (values) => {
-    const isPrimaryKeyOnColumns = values.columns.some(column => column.isPrimaryKey);
+    const isPrimaryKeyOnColumns = values.columns.some(
+      (column) => column.isPrimaryKey
+    );
 
     if (formik.isValid && isPrimaryKeyOnColumns) {
-      const entity = {
+      const entityToAdd = {
         name: values.name.toUpperCase(),
         columns: {},
         records: [],
@@ -100,12 +93,17 @@ export const NewEntityModal = ({ open, handleClose }) => {
         if (columnGroup.isForeignKey) {
           column.foreignKey = true;
           column.relationshipEntity = columnGroup.relationshipEntity;
-        } 
+        }
 
-        entity.columns[columnGroup.columnName.toLowerCase()] = column;
+        entityToAdd.columns[columnGroup.columnName.toLowerCase()] = column;
       });
 
-      addEntity(entity);
+      if (entity) {
+        updateEntity(entityToAdd, entity);
+      } else {
+        addEntity(entityToAdd);
+      }
+
       closeModal();
     } else {
       setShowAlert(true);
@@ -121,11 +119,35 @@ export const NewEntityModal = ({ open, handleClose }) => {
     relationshipEntity: "",
   });
 
+  const getInitialValues = () => {
+    if (!entity) {
+      return {
+        name: "",
+        columns: [{ ...getColumnFormDefaultValues() }],
+      };
+    }
+
+    const formValues = {
+      name: entity.name,
+      columns: Object.keys(entity.columns).map((key) => {
+        const column = entity.columns[key];
+
+        return {
+          columnName: key,
+          columnType: column.type,
+          isRequiredColumn: column.isRequired,
+          isPrimaryKey: Boolean(column.primaryKey),
+          isForeignKey: Boolean(column.foreignKey),
+          relationshipEntity: column.relationshipEntity,
+        };
+      }),
+    };
+
+    return formValues;
+  };
+
   const formik = useFormik({
-    initialValues: {
-      name: "",
-      columns: [{ ...getColumnFormDefaultValues() }],
-    },
+    initialValues: getInitialValues(),
     validationSchema: validationSchema,
     onSubmit: handleSubmit,
   });
@@ -149,6 +171,13 @@ export const NewEntityModal = ({ open, handleClose }) => {
           sx={style}
           autoComplete="off"
         >
+          {entity && (
+            <Alert severity="warning" sx={{ marginBottom: 3 }}>
+              Cuidado: Ao editar uma entidade todos os registros associados
+              serão perdidos!
+            </Alert>
+          )}
+
           <Typography
             id="modal-modal-title"
             variant="h5"
@@ -225,11 +254,22 @@ export const NewEntityModal = ({ open, handleClose }) => {
                           value={column.columnName}
                           onChange={formik.handleChange}
                           error={
-                            getIn(formik.touched, `columns.${index}.columnName`) &&
-                            Boolean(getIn(formik.errors, `columns.${index}.columnName`))
+                            getIn(
+                              formik.touched,
+                              `columns.${index}.columnName`
+                            ) &&
+                            Boolean(
+                              getIn(
+                                formik.errors,
+                                `columns.${index}.columnName`
+                              )
+                            )
                           }
                           helperText={
-                            getIn(formik.touched, `columns.${index}.columnName`) &&
+                            getIn(
+                              formik.touched,
+                              `columns.${index}.columnName`
+                            ) &&
                             getIn(formik.errors, `columns.${index}.columnName`)
                           }
                         />
@@ -317,8 +357,16 @@ export const NewEntityModal = ({ open, handleClose }) => {
                           <FormControl
                             fullWidth
                             error={
-                              getIn(formik.touched, `columns.${index}.relationshipEntity`) &&
-                              Boolean(getIn(formik.errors, `columns.${index}.relationshipEntity`))
+                              getIn(
+                                formik.touched,
+                                `columns.${index}.relationshipEntity`
+                              ) &&
+                              Boolean(
+                                getIn(
+                                  formik.errors,
+                                  `columns.${index}.relationshipEntity`
+                                )
+                              )
                             }
                           >
                             <InputLabel id="column-relationship-select-label">
@@ -339,9 +387,22 @@ export const NewEntityModal = ({ open, handleClose }) => {
                                 </MenuItem>
                               ))}
                             </Select>
-                            {(getIn(formik.touched, `columns.${index}.relationshipEntity`) &&
-                              Boolean(getIn(formik.errors, `columns.${index}.relationshipEntity`))) && (
-                                <FormHelperText>{getIn(formik.errors, `columns.${index}.relationshipEntity`)}</FormHelperText>
+                            {getIn(
+                              formik.touched,
+                              `columns.${index}.relationshipEntity`
+                            ) &&
+                              Boolean(
+                                getIn(
+                                  formik.errors,
+                                  `columns.${index}.relationshipEntity`
+                                )
+                              ) && (
+                                <FormHelperText>
+                                  {getIn(
+                                    formik.errors,
+                                    `columns.${index}.relationshipEntity`
+                                  )}
+                                </FormHelperText>
                               )}
                           </FormControl>
                         </Grid>
@@ -360,7 +421,7 @@ export const NewEntityModal = ({ open, handleClose }) => {
                     type="submit"
                     sx={{ marginLeft: 2, float: "right" }}
                   >
-                    Criar entidade
+                    {entity ? "Editar entidade" : "Criar entidade"}
                   </Button>
 
                   <Button
@@ -378,9 +439,18 @@ export const NewEntityModal = ({ open, handleClose }) => {
           />
         </Box>
 
-        <Snackbar open={showAlert} autoHideDuration={6000} onClose={() => setShowAlert(false)}>
-          <Alert onClose={() => setShowAlert(false)} severity="error" sx={{ width: '100%' }}>
-            É necessário ao menos uma coluna como chave primária para criar uma entidade!
+        <Snackbar
+          open={showAlert}
+          autoHideDuration={6000}
+          onClose={() => setShowAlert(false)}
+        >
+          <Alert
+            onClose={() => setShowAlert(false)}
+            severity="error"
+            sx={{ width: "100%" }}
+          >
+            É necessário ao menos uma coluna como chave primária para criar uma
+            entidade!
           </Alert>
         </Snackbar>
       </FormikProvider>
