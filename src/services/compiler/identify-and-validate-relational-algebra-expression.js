@@ -1,5 +1,5 @@
 const selection =
-  /(?<variable>[\w]+\s?<-\s?)?(?<operator>[σ])\s?(?<column>\w+)\s?(?<conditional>[<>=]?>?=?<?=?)\s?['"]?(?<value>\w+)['"]?\s?\((?<entity>\w+)\)/;
+  /(?<variable>[\w]+\s?<-\s?)?(?<operator>[σ])\s?(?<column>\w+)\s?(?<conditional>[<>=]?>?=?<?=?)\s?['"]?(?<value>.+?)['"]?\s?\((?<entity>.+)\)/;
 
 const projection =
   /(?<variable>[\w]+\s?<-\s?)?(?<operator>π)\s?(?<columns>[A-Za-z, ]+[^(])\((?<entity>\w+)\)/;
@@ -23,7 +23,7 @@ export function identifyAndValidateRelationalAlgebraExpression(expression) {
       }
     });
 
-    if (!groups) {
+    if (!groups || (groups.value && groups.value.trim() == '')) {
       throw new Error("Expressão inválida");
     }
 
