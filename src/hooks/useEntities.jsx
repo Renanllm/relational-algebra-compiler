@@ -5,7 +5,9 @@ const EntitiesContext = createContext({});
 
 export function EntitiesProvider({ children }) {
   const [entities, setEntities] = useState(() => {
-    const storagedEntities = localStorage.getItem('@compiler:storaged-entities');
+    const storagedEntities = localStorage.getItem(
+      "@compiler:storaged-entities"
+    );
 
     if (storagedEntities) {
       const storagedEntitiesParsed = JSON.parse(storagedEntities);
@@ -15,22 +17,53 @@ export function EntitiesProvider({ children }) {
     return defaultEntities;
   });
 
-  const addEntity = (entity) => {
-    // const entityByNameIndex = entities.findIndex(e => e.name === entity.name);
-    const newEntities = [...entities];
+  const isEntityNameDuplicated = (entity, oldEntity) => {
+    if (entity.variable) {
+      return false;
+    }
 
-    // if (entityByNameIndex > -1) {
-    //   newEntities[entityByNameIndex] = entity;
-    // } else {
-      newEntities.push(entity);
-    // }
+    if (!oldEntity) {
+      return entities.some(ent => ent.name.toLowerCase() == entity.name.toLowerCase());
+    }
+
+    if (entity.name == oldEntity.name) {
+      return false;
+    }
+
+    return entities.some(ent => ent.name.toLowerCase() == entity.name.toLowerCase());
+  }
+
+  const addEntity = (entity) => {
+    if (isEntityNameDuplicated(entity)) {
+      throw new Error('Já existe uma entidade com esse nome!')
+    }
+
+    const entityByNameIndex = entities.findIndex((e) => e.name === entity.name);
+
+    const newEntities = [...entities];
+    
+    if (entityByNameIndex > -1) {
+      updateEntity(entity, newEntities[entityByNameIndex]);
+      return;
+    }
+
+    newEntities.push(entity);
 
     setEntities(newEntities);
-    localStorage.setItem('@compiler:storaged-entities', JSON.stringify(newEntities.filter(ent => !ent.variable)));
+    localStorage.setItem(
+      "@compiler:storaged-entities",
+      JSON.stringify(newEntities.filter((ent) => !ent.variable))
+    );
   };
 
   const updateEntity = (entity, oldEntity) => {
-    const entityByNameIndex = entities.findIndex(e => e.name === oldEntity.name);
+    if (isEntityNameDuplicated(entity, oldEntity)) {
+      throw new Error('Já existe uma entidade com esse nome!')
+    }
+
+    const entityByNameIndex = entities.findIndex(
+      (e) => e.name === oldEntity.name
+    );
     const newEntities = [...entities];
 
     if (entityByNameIndex > -1) {
@@ -41,25 +74,33 @@ export function EntitiesProvider({ children }) {
     }
 
     setEntities(newEntities);
-    localStorage.setItem('@compiler:storaged-entities', JSON.stringify(newEntities.filter(ent => !ent.variable)));
+    localStorage.setItem(
+      "@compiler:storaged-entities",
+      JSON.stringify(newEntities.filter((ent) => !ent.variable))
+    );
   };
 
   const deleteEntity = (entity) => {
-    const entityToDeleteIndex = entities.findIndex(ent => ent == entity);
+    const entityToDeleteIndex = entities.findIndex((ent) => ent == entity);
 
     if (entityToDeleteIndex == -1) {
-      throw new Error('Entity not found!')
+      throw new Error("Entity not found!");
     }
 
     const newEntities = [...entities];
     newEntities.splice(entityToDeleteIndex, 1);
 
     setEntities(newEntities);
-    localStorage.setItem('@compiler:storaged-entities', JSON.stringify(newEntities.filter(ent => !ent.variable)));
-  }
+    localStorage.setItem(
+      "@compiler:storaged-entities",
+      JSON.stringify(newEntities.filter((ent) => !ent.variable))
+    );
+  };
 
   return (
-    <EntitiesContext.Provider value={{ entities, addEntity, updateEntity, deleteEntity }}>
+    <EntitiesContext.Provider
+      value={{ entities, addEntity, updateEntity, deleteEntity }}
+    >
       {children}
     </EntitiesContext.Provider>
   );

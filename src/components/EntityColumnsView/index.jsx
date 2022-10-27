@@ -32,8 +32,7 @@ export const EntityColumnsView = () => {
   const [openAddNewRecordsModal, setOpenAddNewRecordsModal] = useState(false);
   const [openViewEntityRecordsModal, setOpenViewEntityRecordsModal] =
     useState(false);
-  const [openNewEntityModal, setOpenNewEntityModal] =
-    useState(false);
+  const [openNewEntityModal, setOpenNewEntityModal] = useState(false);
   const [entityChoosed, setEntityChoosed] = useState(null);
 
   const handleChange = (event, newValue) => {
@@ -49,60 +48,58 @@ export const EntityColumnsView = () => {
 
   const renderColumns = (entities, canEdit) =>
     entities.map((entity) => {
-      if (!entity.variable) {
-        return (
-          <Box sx={{ margin: "16px 0" }} key={entity.name}>
-            <Box
-              sx={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-              }}
-            >
-              <Typography sx={{ fontWeight: 400 }} variant="h6">
-                {entity.name}
-              </Typography>
+      return (
+        <Box sx={{ margin: "16px 0" }} key={entity.name}>
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+          >
+            <Typography sx={{ fontWeight: 400 }} variant="h6">
+              {entity.name}
+            </Typography>
 
-              {canEdit ? (
-                <DropMenu
-                  handleAddRecords={() => {
-                    setEntityChoosed(entity);
-                    setOpenAddNewRecordsModal(true);
-                  }}
-                  handleEditEntity={() => {
-                    setEntityChoosed(entity);
-                    setOpenNewEntityModal(true);
-                  }}
-                  handleViewRecords={() => {
-                    setEntityChoosed(entity);
-                    setOpenViewEntityRecordsModal(true);
-                  }}
-                  handleDeleteEntity={() => deleteEntity(entity)}
-                />
-              ) : (
-                <DropMenu
-                  handleViewRecords={() => {
-                    setEntityChoosed(entity);
-                    setOpenViewEntityRecordsModal(true);
-                  }}
-                />
-              )}
-            </Box>
-            {Object.keys(entity.columns).map((column, index) => (
-              <Typography sx={{ padding: "0 16px" }} key={`${column}-${index}`}>
-                {column} -{" "}
-                <span style={{ fontSize: "13px" }}>
-                  {entity.columns[column].type === "text"
-                    ? "string"
-                    : entity.columns[column].type}
-                  {entity.columns[column]?.primaryKey && " - pk"}
-                  {entity.columns[column]?.foreignKey && " - fk"}
-                </span>
-              </Typography>
-            ))}
+            {canEdit ? (
+              <DropMenu
+                handleAddRecords={() => {
+                  setEntityChoosed(entity);
+                  setOpenAddNewRecordsModal(true);
+                }}
+                handleEditEntity={() => {
+                  setEntityChoosed(entity);
+                  setOpenNewEntityModal(true);
+                }}
+                handleViewRecords={() => {
+                  setEntityChoosed(entity);
+                  setOpenViewEntityRecordsModal(true);
+                }}
+                handleDeleteEntity={() => deleteEntity(entity)}
+              />
+            ) : (
+              <DropMenu
+                handleViewRecords={() => {
+                  setEntityChoosed(entity);
+                  setOpenViewEntityRecordsModal(true);
+                }}
+              />
+            )}
           </Box>
-        );
-      }
+          {Object.keys(entity.columns).map((column, index) => (
+            <Typography sx={{ padding: "0 16px" }} key={`${column}-${index}`}>
+              {column} -{" "}
+              <span style={{ fontSize: "13px" }}>
+                {entity.columns[column].type === "text"
+                  ? "string"
+                  : entity.columns[column].type}
+                {entity.columns[column]?.primaryKey && " - pk"}
+                {entity.columns[column]?.foreignKey && " - fk"}
+              </span>
+            </Typography>
+          ))}
+        </Box>
+      );
     });
 
   return (
@@ -119,23 +116,33 @@ export const EntityColumnsView = () => {
       >
         <>
           <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
-            <Tabs value={value} onChange={handleChange}>
-              <Tab
-                label="Cadastradas"
-                {...a11yProps(0)}
-              />
-              <Tab
-                label="Exemplos"
-                {...a11yProps(1)}
-              />
+            <Tabs
+              value={value}
+              onChange={handleChange}
+            >
+              <Tab wrapped label="Cadastradas" {...a11yProps(0)} />
+              <Tab wrapped label="Temporárias" {...a11yProps(1)} />
+              <Tab wrapped label="Exemplos" {...a11yProps(2)} />
             </Tabs>
           </Box>
           <Box sx={{ overflow: "auto" }}>
             <TabPanel value={value} index={0}>
-              {renderColumns(entities.filter((entity) => !entity.example), true)}
+              {renderColumns(
+                entities.filter((entity) => !entity.example & !entity.variable),
+                true
+              )}
             </TabPanel>
             <TabPanel value={value} index={1}>
-              {renderColumns(entities.filter((entity) => entity.example), false)}
+              {renderColumns(
+                entities.filter((entity) => entity.variable),
+                false
+              )}
+            </TabPanel>
+            <TabPanel value={value} index={2}>
+              {renderColumns(
+                entities.filter((entity) => entity.example),
+                false
+              )}
             </TabPanel>
           </Box>
         </>

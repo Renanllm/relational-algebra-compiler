@@ -64,9 +64,14 @@ const validationSchema = yup.object({
   ),
 });
 
+const messages = {
+  primaryKeyError: `É necessário ao menos uma coluna como chave primária para criar uma
+  entidade!`,
+};
+
 export const NewEntityModal = ({ open, handleClose, entity }) => {
   const { entities = [], addEntity, updateEntity } = useEntities();
-  const [showAlert, setShowAlert] = useState(false);
+  const [alert, setAlert] = useState({ open: false, message: "" });
 
   const handleSubmit = (values) => {
     const isPrimaryKeyOnColumns = values.columns.some(
@@ -98,15 +103,19 @@ export const NewEntityModal = ({ open, handleClose, entity }) => {
         entityToAdd.columns[columnGroup.columnName.toLowerCase()] = column;
       });
 
-      if (entity) {
-        updateEntity(entityToAdd, entity);
-      } else {
-        addEntity(entityToAdd);
-      }
+      try {
+        if (entity) {
+          updateEntity(entityToAdd, entity);
+        } else {
+          addEntity(entityToAdd);
+        }
 
-      closeModal();
+        closeModal();
+      } catch (error) {
+        setAlert({ open: true, message: error.message });
+      }
     } else {
-      setShowAlert(true);
+      setAlert({ open: true, message: messages.primaryKeyError });
     }
   };
 
@@ -440,17 +449,16 @@ export const NewEntityModal = ({ open, handleClose, entity }) => {
         </Box>
 
         <Snackbar
-          open={showAlert}
+          open={alert.open}
           autoHideDuration={6000}
-          onClose={() => setShowAlert(false)}
+          onClose={() => setAlert((state) => ({ ...state, open: false }))}
         >
           <Alert
-            onClose={() => setShowAlert(false)}
+            onClose={() => setAlert((state) => ({ ...state, open: false }))}
             severity="error"
             sx={{ width: "100%" }}
           >
-            É necessário ao menos uma coluna como chave primária para criar uma
-            entidade!
+            {alert.message}
           </Alert>
         </Snackbar>
       </FormikProvider>
